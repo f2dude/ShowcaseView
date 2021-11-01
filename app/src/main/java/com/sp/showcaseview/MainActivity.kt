@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.sp.showcaseview.config.DismissType
-import com.sp.showcaseview.config.PointerType
 import com.sp.showcaseview.config.ViewType
 import com.sp.showcaseview.databinding.ActivityMainBinding
 import com.sp.showcaseview.listener.GuideListener
@@ -32,7 +31,6 @@ class MainActivity : AppCompatActivity() {
         builder?.let {
             it.setContentText(text)
             it.setContentTextSize(16)
-            it.setPointerType(PointerType.ARROW)
             it.setDismissType(DismissType.ANYWHERE)
             it.setTargetView(currentView)
             it.setViewType(ViewType.BOTTOM_NAVIGATION)

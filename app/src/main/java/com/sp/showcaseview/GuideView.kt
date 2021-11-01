@@ -1,21 +1,21 @@
 package com.sp.showcaseview
 
-import android.animation.Animator
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.VectorDrawable
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
+import androidx.core.content.ContextCompat
 import com.sp.showcaseview.config.DismissType
-import com.sp.showcaseview.config.PointerType
 import com.sp.showcaseview.config.ViewType
 import com.sp.showcaseview.listener.GuideListener
 
@@ -30,77 +30,23 @@ import com.sp.showcaseview.listener.GuideListener
 @SuppressLint("ViewConstructor")
 class GuideView constructor(context: Context, view: View?) : FrameLayout(context) {
 
-    private val selfPaint: Paint = Paint()
-    private val paintCircle: Paint = Paint()
-    private val targetPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val porterDuffModeClear: Xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-    private val target: View?
+    private val mBackGroundPaint: Paint = Paint()
+    private val mArrowPaint: Paint = Paint()
+    private val mShowcaseViewPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val mPorterDuffModeClear: Xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+    private val mTargetView: View?
     private var mShowcaseViewRect: RectF? = null
-    private val selfRect: Rect = Rect()
-    private val density: Float
-    private var stopY = 0f
-    private var isTop = false
-    private var yMessageView = 0
-    private var startYLineAndCircle = 0f
-    private var circleIndicatorSize = 0f
-    private var circleIndicatorSizeFinal = 0f
-    private var circleInnerIndicatorSize = 0f
-    private var marginGuide = 0f
+    private val mBackgroundRect: Rect = Rect()
+    private val mDensity: Float
+    private var mIsTop = false
     private var indicatorHeight = 0f
-    private var isPerformedAnimationSize = false
     private var mGuideListener: GuideListener? = null
-    private var dismissType: DismissType? = null
-    private var pointerType: PointerType? = null
+    private var mDismissType: DismissType? = null
     private var mViewType: ViewType? = null
     private val mMessageView: GuideMessageView
 
-    private fun startAnimationSize() {
-        if (!isPerformedAnimationSize) {
-            val circleSizeAnimator = ValueAnimator.ofFloat(
-                0f,
-                circleIndicatorSizeFinal
-            )
-            circleSizeAnimator.addUpdateListener {
-                circleIndicatorSize = it.animatedValue as Float
-                circleInnerIndicatorSize = it.animatedValue as Float - density
-                postInvalidate()
-            }
-            val linePositionAnimator = ValueAnimator.ofFloat(
-                stopY,
-                startYLineAndCircle
-            )
-            linePositionAnimator.addUpdateListener {
-                startYLineAndCircle = it.animatedValue as Float
-                postInvalidate()
-            }
-            linePositionAnimator.duration = SIZE_ANIMATION_DURATION.toLong()
-            linePositionAnimator.start()
-            linePositionAnimator.addListener(object : Animator.AnimatorListener {
-                override fun onAnimationStart(animator: Animator) {
-                    //Do nothing
-                }
-
-                override fun onAnimationEnd(animator: Animator) {
-                    circleSizeAnimator.duration = SIZE_ANIMATION_DURATION.toLong()
-                    circleSizeAnimator.start()
-                    isPerformedAnimationSize = true
-                }
-
-                override fun onAnimationCancel(animator: Animator) {
-                    //Do nothing
-                }
-
-                override fun onAnimationRepeat(animator: Animator) {
-                    //Do nothing
-                }
-            })
-        }
-    }
-
     private fun init() {
-        marginGuide = MARGIN_INDICATOR * density
-        indicatorHeight = INDICATOR_HEIGHT * density
-        circleIndicatorSizeFinal = CIRCLE_INDICATOR_SIZE * density
+        indicatorHeight = INDICATOR_HEIGHT * mDensity
     }
 
     private fun getNavigationBarSize(): Int {
@@ -118,51 +64,66 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (target != null) {
-            selfPaint.color = BACKGROUND_COLOR
-            selfPaint.style = Paint.Style.FILL
-            selfPaint.isAntiAlias = true
-            canvas.drawRect(selfRect, selfPaint)
+        if (mTargetView != null) {
+            mBackGroundPaint.color = BACKGROUND_COLOR
+            mBackGroundPaint.style = Paint.Style.FILL
+            mBackGroundPaint.isAntiAlias = true
+            canvas.drawRect(mBackgroundRect, mBackGroundPaint)
 
             //Arrow paint circle
-            paintCircle.style = Paint.Style.FILL
-            paintCircle.color = CIRCLE_INDICATOR_COLOR
-            paintCircle.isAntiAlias = true
+            mArrowPaint.color = Color.WHITE
 
-            var x = MESSAGE_VIEW_MARGIN_START * density
-            when (pointerType) {
-                PointerType.ARROW -> {
-                    val path = Path()
-                    if (isTop) {
-                        path.moveTo(x, startYLineAndCircle - circleIndicatorSize * 2)
-                        path.lineTo(x + circleIndicatorSize, startYLineAndCircle)
-                        path.lineTo(x - circleIndicatorSize, startYLineAndCircle)
-                        path.close()
-                    } else {
-                        path.moveTo(x, startYLineAndCircle + circleIndicatorSize * 2)
-                        path.lineTo(x + circleIndicatorSize, startYLineAndCircle)
-                        path.lineTo(x - circleIndicatorSize, startYLineAndCircle)
-                        path.close()
-                    }
-                    canvas.drawPath(path, paintCircle)
-                }
-                PointerType.NONE -> {
-                    //Do nothing
-                }
+            val drawableId = if (mIsTop) {
+                R.drawable.ic_chevron_up
+            } else {
+                R.drawable.ic_chevron_down
             }
-            targetPaint.xfermode = porterDuffModeClear
-            targetPaint.isAntiAlias = true
-            if (target is Target) {
-                (target as Target).guidePath()?.let { canvas.drawPath(it, targetPaint) }
+            getVectorBitmap(context, drawableId)?.let { bitmap ->
+                val xBitmap = mMessageView.x
+                val yBitmap = if (mIsTop) {
+                    mMessageView.y - bitmap.height
+                } else {
+                    mMessageView.y + mMessageView.height
+                }
+                canvas.drawBitmap(
+                    bitmap,
+                    xBitmap,
+                    yBitmap,
+                    mArrowPaint
+                )
+            }
+            mShowcaseViewPaint.xfermode = mPorterDuffModeClear
+            mShowcaseViewPaint.isAntiAlias = true
+            if (mTargetView is Target) {
+                (mTargetView as Target).guidePath()?.let { canvas.drawPath(it, mShowcaseViewPaint) }
             } else {
                 canvas.drawRoundRect(
                     mShowcaseViewRect!!,
                     RADIUS_SIZE_TARGET_RECT,
                     RADIUS_SIZE_TARGET_RECT,
-                    targetPaint
+                    mShowcaseViewPaint
                 )
             }
         }
+    }
+
+    private fun getVectorBitmap(context: Context, drawableId: Int): Bitmap? {
+        var bitmap: Bitmap? = null
+        when (val drawable = ContextCompat.getDrawable(context, drawableId)) {
+            is BitmapDrawable -> {
+                bitmap = drawable.bitmap
+            }
+            is VectorDrawable -> {
+                bitmap = Bitmap.createBitmap(
+                    drawable.intrinsicWidth,
+                    drawable.intrinsicHeight, Bitmap.Config.ARGB_8888
+                )
+                val canvas = Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+            }
+        }
+        return bitmap
     }
 
     /**
@@ -170,8 +131,8 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
      */
     private fun dismiss() {
         ((context as Activity).window.decorView as ViewGroup).removeView(this)
-        if (mGuideListener != null && target != null) {
-            mGuideListener!!.onDismiss(target)
+        if (mGuideListener != null && mTargetView != null) {
+            mGuideListener!!.onDismiss(mTargetView)
         }
     }
 
@@ -180,13 +141,13 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         val x = event.x
         val y = event.y
         if (event.action == MotionEvent.ACTION_DOWN) {
-            when (dismissType) {
+            when (mDismissType) {
                 DismissType.OUTSIDE -> if (!isViewContains(mMessageView, x, y)) {
                     dismiss()
                 }
                 DismissType.ANYWHERE -> dismiss()
                 DismissType.TARGET_VIEW -> if (mShowcaseViewRect!!.contains(x, y)) {
-                    target?.performClick()
+                    mTargetView?.performClick()
                     dismiss()
                 }
                 DismissType.SELF_VIEW -> if (isViewContains(mMessageView, x, y)) {
@@ -231,7 +192,10 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
      * @return Point object holding two integer x,y co-ordinates
      */
     private fun resolveMessageViewLocation(): Point {
-        var xMessageView: Int = (MESSAGE_VIEW_MARGIN_START * 2.2F).toInt()
+        var xMessageView = 0
+        mShowcaseViewRect?.let { rect ->
+            xMessageView = rect.left.toInt()
+        }
 
         if (isLandscape()) {
             xMessageView -= getNavigationBarSize()
@@ -241,12 +205,15 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         }
 
         //set message view bottom
+        var yMessageView = 0
         if (mShowcaseViewRect!!.top + indicatorHeight > height / 2f) {
-            isTop = false
-            yMessageView = (mShowcaseViewRect!!.top - mMessageView.height - indicatorHeight).toInt()
+            mIsTop = false
+            yMessageView =
+                (mShowcaseViewRect!!.top - mMessageView.height - indicatorHeight).toInt()
         } else {
-            isTop = true
-            yMessageView = ((mShowcaseViewRect!!.top + target!!.height + indicatorHeight).toInt())
+            mIsTop = true
+            yMessageView =
+                ((mShowcaseViewRect!!.top + mTargetView!!.height + indicatorHeight).toInt())
         }
         if (yMessageView < 0) {
             yMessageView = 0
@@ -279,11 +246,8 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         private var targetView: View? = null
         private var contentText: String? = null
         private var dismissType: DismissType? = null
-        private var pointerType: PointerType? = null
         private var guideListener: GuideListener? = null
         private var contentTextSize = 0
-        private var circleIndicatorSize = 0f
-        private var circleInnerIndicatorSize = 0f
         private var mViewType: ViewType? = null
 
         fun setTargetView(view: View?): Builder {
@@ -334,16 +298,6 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         }
 
         /**
-         * this method defining the type of pointer
-         *
-         * @param pointerType should be one type of PointerType enum. for example: arrow -> To show arrow pointing to target view
-         */
-        fun setPointerType(pointerType: PointerType?): Builder {
-            this.pointerType = pointerType
-            return this
-        }
-
-        /**
          * Sets the type of view
          *
          * @param viewType [ViewType]
@@ -355,10 +309,8 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
 
         fun build(): GuideView {
             val guideView = GuideView(context, targetView)
-            guideView.dismissType = dismissType ?: DismissType.TARGET_VIEW
-            guideView.pointerType = pointerType ?: PointerType.ARROW
+            guideView.mDismissType = dismissType ?: DismissType.TARGET_VIEW
             guideView.mViewType = mViewType
-            val density: Float = context.resources.displayMetrics.density
             if (contentText != null) {
                 guideView.setContentText(contentText)
             }
@@ -368,39 +320,26 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
             if (guideListener != null) {
                 guideView.mGuideListener = guideListener
             }
-            if (circleIndicatorSize != 0f) {
-                guideView.circleIndicatorSize = circleIndicatorSize * density
-            }
-            if (circleInnerIndicatorSize != 0f) {
-                guideView.circleInnerIndicatorSize = circleInnerIndicatorSize * density
-            }
             return guideView
         }
     }
 
     companion object {
         private const val INDICATOR_HEIGHT = 18 //Space between message view and arrow
-        private const val SIZE_ANIMATION_DURATION = 700
         private const val APPEARING_ANIMATION_DURATION = 400
-        private const val CIRCLE_INDICATOR_SIZE = 8 //Arrow mark size
         private const val RADIUS_SIZE_TARGET_RECT = 50f //Corner radius of rectangle
-        private const val MARGIN_INDICATOR = 20 //Space between showcase view and arrow
         private const val BACKGROUND_COLOR = -0x67000000
-        private const val CIRCLE_INNER_INDICATOR_COLOR = -0x333334
-        private const val CIRCLE_INDICATOR_COLOR: Int = Color.WHITE
-        private const val DEFAULT_MARGIN = 0F
         private const val SHOW_CASE_VIEW_DEFAULT_MARGIN = 16F //Bottom view default margin
-        private const val MESSAGE_VIEW_MARGIN_START = 32F //Start margin of message view
         private const val DEFAULT_MESSAGE_VIEW_WIDTH = 250 //Message view width
     }
 
     init {
         setWillNotDraw(false)
         setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        target = view
-        density = context.resources.displayMetrics.density
+        mTargetView = view
+        mDensity = context.resources.displayMetrics.density
         init()
-        if (target != null) {
+        if (mTargetView != null) {
             mShowcaseViewRect = buildShowCaseRectangle()
         }
         mMessageView = GuideMessageView(getContext())
@@ -409,7 +348,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         addView(
             mMessageView,
             LayoutParams(
-                (DEFAULT_MESSAGE_VIEW_WIDTH * density).toInt(),
+                (DEFAULT_MESSAGE_VIEW_WIDTH * mDensity).toInt(),
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         )
@@ -418,21 +357,15 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
             override fun onGlobalLayout() {
                 viewTreeObserver.removeOnGlobalLayoutListener(this)
                 setMessageLocation(resolveMessageViewLocation())
-                if (target != null) {
+                if (mTargetView != null) {
                     mShowcaseViewRect = buildShowCaseRectangle()
                 }
-                selfRect.set(
+                mBackgroundRect.set(
                     paddingLeft,
                     paddingTop,
                     width - paddingRight,
                     height - paddingBottom
                 )
-                marginGuide = (if (isTop) marginGuide else -marginGuide).toFloat()
-                startYLineAndCircle =
-                    ((if (isTop) mShowcaseViewRect?.bottom else mShowcaseViewRect?.top)?.plus(marginGuide)
-                        ?: 0).toFloat()
-                stopY = yMessageView + indicatorHeight
-                startAnimationSize()
                 viewTreeObserver.addOnGlobalLayoutListener(this)
             }
         }
@@ -445,13 +378,12 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
      * @return Rectangle size showcase view
      */
     private fun buildShowCaseRectangle(): RectF? {
-        val rectF = target?.let {
+        val rectF = mTargetView?.let {
             if (it is Target) {
                 (it as Target).boundingRect()
             } else {
                 val locationTarget = IntArray(2)
                 it.getLocationOnScreen(locationTarget)
-//                val viewMargin = bottomViewMargin(locationTarget)
                 val viewMargin = SHOW_CASE_VIEW_DEFAULT_MARGIN
                 when (mViewType) {
                     ViewType.BOTTOM_NAVIGATION -> {
@@ -475,22 +407,4 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         }
         return rectF
     }
-
-//    /**
-//     * Margin if the view is placed at bottom of the screen.
-//     *
-//     * @param locationTarget Position of the view on screen.
-//     *        It has x,y co-ordinates present in it
-//     *@return Margin that needs to be adjusted for the view.
-//     */
-//    private fun bottomViewMargin(locationTarget: IntArray): Float {
-//        val margin =
-//            if (locationTarget[0] == 0 && target?.height?.plus(locationTarget[1]) == height) {
-//                //View is placed at bottom of the screen
-//                SHOW_CASE_VIEW_DEFAULT_MARGIN
-//            } else {
-//                DEFAULT_MARGIN
-//            }
-//        return margin
-//    }
 }
