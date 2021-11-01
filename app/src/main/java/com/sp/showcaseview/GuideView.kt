@@ -32,11 +32,10 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
 
     private val selfPaint: Paint = Paint()
     private val paintCircle: Paint = Paint()
-    private val paintCircleInner: Paint = Paint()
     private val targetPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val porterDuffModeClear: Xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     private val target: View?
-    private var targetRect: RectF? = null
+    private var mShowcaseViewRect: RectF? = null
     private val selfRect: Rect = Rect()
     private val density: Float
     private var stopY = 0f
@@ -130,10 +129,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
             paintCircle.color = CIRCLE_INDICATOR_COLOR
             paintCircle.isAntiAlias = true
 
-            paintCircleInner.style = Paint.Style.FILL
-            paintCircleInner.color = CIRCLE_INNER_INDICATOR_COLOR
-            paintCircleInner.isAntiAlias = true
-            val x = MESSAGE_VIEW_MARGIN_START * density
+            var x = MESSAGE_VIEW_MARGIN_START * density
             when (pointerType) {
                 PointerType.ARROW -> {
                     val path = Path()
@@ -160,7 +156,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
                 (target as Target).guidePath()?.let { canvas.drawPath(it, targetPaint) }
             } else {
                 canvas.drawRoundRect(
-                    targetRect!!,
+                    mShowcaseViewRect!!,
                     RADIUS_SIZE_TARGET_RECT,
                     RADIUS_SIZE_TARGET_RECT,
                     targetPaint
@@ -189,14 +185,14 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
                     dismiss()
                 }
                 DismissType.ANYWHERE -> dismiss()
-                DismissType.TARGET_VIEW -> if (targetRect!!.contains(x, y)) {
+                DismissType.TARGET_VIEW -> if (mShowcaseViewRect!!.contains(x, y)) {
                     target?.performClick()
                     dismiss()
                 }
                 DismissType.SELF_VIEW -> if (isViewContains(mMessageView, x, y)) {
                     dismiss()
                 }
-                DismissType.OUTSIDE_TARGET_AND_MESSAGE -> if (!(targetRect!!.contains(
+                DismissType.OUTSIDE_TARGET_AND_MESSAGE -> if (!(mShowcaseViewRect!!.contains(
                         x,
                         y
                     ) || isViewContains(
@@ -245,12 +241,12 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         }
 
         //set message view bottom
-        if (targetRect!!.top + indicatorHeight > height / 2f) {
+        if (mShowcaseViewRect!!.top + indicatorHeight > height / 2f) {
             isTop = false
-            yMessageView = (targetRect!!.top - mMessageView.height - indicatorHeight).toInt()
+            yMessageView = (mShowcaseViewRect!!.top - mMessageView.height - indicatorHeight).toInt()
         } else {
             isTop = true
-            yMessageView = ((targetRect!!.top + target!!.height + indicatorHeight).toInt())
+            yMessageView = ((mShowcaseViewRect!!.top + target!!.height + indicatorHeight).toInt())
         }
         if (yMessageView < 0) {
             yMessageView = 0
@@ -405,7 +401,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         density = context.resources.displayMetrics.density
         init()
         if (target != null) {
-            targetRect = buildShowCaseRectangle()
+            mShowcaseViewRect = buildShowCaseRectangle()
         }
         mMessageView = GuideMessageView(getContext())
         mMessageView.setColor(Color.WHITE)
@@ -423,7 +419,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
                 viewTreeObserver.removeOnGlobalLayoutListener(this)
                 setMessageLocation(resolveMessageViewLocation())
                 if (target != null) {
-                    targetRect = buildShowCaseRectangle()
+                    mShowcaseViewRect = buildShowCaseRectangle()
                 }
                 selfRect.set(
                     paddingLeft,
@@ -433,7 +429,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
                 )
                 marginGuide = (if (isTop) marginGuide else -marginGuide).toFloat()
                 startYLineAndCircle =
-                    ((if (isTop) targetRect?.bottom else targetRect?.top)?.plus(marginGuide)
+                    ((if (isTop) mShowcaseViewRect?.bottom else mShowcaseViewRect?.top)?.plus(marginGuide)
                         ?: 0).toFloat()
                 stopY = yMessageView + indicatorHeight
                 startAnimationSize()
