@@ -205,7 +205,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
     private fun resolveMessageViewLocation(): Point {
         var xMessageView = 0
         mShowcaseViewRect?.let { rect ->
-            xMessageView = rect.left.toInt()
+            xMessageView = (rect.left.toInt()) * MESSAGE_VIEW_AND_ARROW_LEFT_MARGIN_MULTIPLIER
         }
         if (xMessageView < 0) {
             xMessageView = 0
@@ -366,6 +366,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         private const val DEFAULT_MESSAGE_VIEW_WIDTH = 250 //Message view width
         private const val CHEVRON_TOP_GAP = 3
         private const val CHEVRON_BOTTOM_GAP = 5
+        private const val MESSAGE_VIEW_AND_ARROW_LEFT_MARGIN_MULTIPLIER = 3
     }
 
     init {
