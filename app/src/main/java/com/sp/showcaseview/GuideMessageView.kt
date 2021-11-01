@@ -27,7 +27,7 @@ internal class GuideMessageView(context: Context) :
     companion object {
         private const val RADIUS_SIZE = 5
         private const val DEFAULT_CONTENT_TEXT_SIZE = 14
-        private const val DEFAULT_CONTENT_TEXT_VIEW_PADDING = 8
+        private const val DEFAULT_CONTENT_TEXT_VIEW_PADDING = 16
     }
 
     init {
