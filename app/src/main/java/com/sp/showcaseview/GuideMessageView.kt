@@ -2,7 +2,6 @@ package com.sp.showcaseview
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.TypedValue
@@ -41,7 +40,6 @@ internal class GuideMessageView(context: Context) :
         mPaint.strokeCap = Paint.Cap.ROUND
 
         mContentTextView = TextView(context)
-        mContentTextView.setTextColor(Color.BLACK)
         mContentTextView.setTextSize(
             TypedValue.COMPLEX_UNIT_DIP,
             DEFAULT_CONTENT_TEXT_SIZE.toFloat()
@@ -71,14 +69,38 @@ internal class GuideMessageView(context: Context) :
         canvas.drawRoundRect(mRect, radiusSize, radiusSize, mPaint)
     }
 
+    /**
+     * Set text on text view.
+     *
+     * @param content Text.
+     */
     fun setContentText(content: String?) {
         mContentTextView.text = content
     }
 
+    /**
+     * Text view text size.
+     *
+     * @param size Text size.
+     */
     fun setContentTextSize(size: Int) {
         mContentTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, size.toFloat())
     }
 
+    /**
+     * Text view text color.
+     *
+     * @param color Text color.
+     */
+    fun setContentTextColor(color: Int) {
+        mContentTextView.setTextColor(color)
+    }
+
+    /**
+     * Text view background color.
+     *
+     * @param color Background color.
+     */
     fun setColor(color: Int) {
         mPaint.color = color
         invalidate()

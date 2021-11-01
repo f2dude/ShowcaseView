@@ -1,7 +1,7 @@
 package com.sp.showcaseview.config
 
 /**
- * Enum class containing different types of views.
+ * Enum class to define target view types
  *
  * @author Saikrishna Pawar
  * @since 10/29/2021

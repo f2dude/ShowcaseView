@@ -3,8 +3,6 @@ package com.sp.showcaseview
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.content.res.Configuration
-import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.VectorDrawable
@@ -39,28 +37,10 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
     private val mBackgroundRect: Rect = Rect()
     private val mDensity: Float
     private var mIsTop = false
-    private var indicatorHeight = 0f
     private var mGuideListener: GuideListener? = null
     private var mDismissType: DismissType? = null
     private var mViewType: ViewType? = null
     private val mMessageView: GuideMessageView
-
-    private fun init() {
-        indicatorHeight = INDICATOR_HEIGHT * mDensity
-    }
-
-    private fun getNavigationBarSize(): Int {
-        val resources: Resources = context.resources
-        val resourceId: Int = resources.getIdentifier("navigation_bar_height", "dimen", "android")
-        return if (resourceId > 0) {
-            resources.getDimensionPixelSize(resourceId)
-        } else 0
-    }
-
-    private fun isLandscape(): Boolean {
-        val displayMode = resources.configuration.orientation
-        return displayMode != Configuration.ORIENTATION_PORTRAIT
-    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -107,6 +87,14 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         }
     }
 
+    /**
+     * Returns the drawable as vector bitmap or simply bitmap if it is a bitmap drawable.
+     *
+     * @param context Context
+     * @param drawableId Drawable resource identifier
+     *
+     * @return Bitmap object
+     */
     private fun getVectorBitmap(context: Context, drawableId: Int): Bitmap? {
         var bitmap: Bitmap? = null
         when (val drawable = ContextCompat.getDrawable(context, drawableId)) {
@@ -141,35 +129,54 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         val x = event.x
         val y = event.y
         if (event.action == MotionEvent.ACTION_DOWN) {
-            when (mDismissType) {
-                DismissType.OUTSIDE -> if (!isViewContains(mMessageView, x, y)) {
-                    dismiss()
-                }
-                DismissType.ANYWHERE -> dismiss()
-                DismissType.TARGET_VIEW -> if (mShowcaseViewRect!!.contains(x, y)) {
-                    mTargetView?.performClick()
-                    dismiss()
-                }
-                DismissType.SELF_VIEW -> if (isViewContains(mMessageView, x, y)) {
-                    dismiss()
-                }
-                DismissType.OUTSIDE_TARGET_AND_MESSAGE -> if (!(mShowcaseViewRect!!.contains(
-                        x,
-                        y
-                    ) || isViewContains(
-                        mMessageView,
-                        x,
-                        y
-                    ))
-                ) {
-                    dismiss()
-                }
-            }
+            onDismiss(x, y)
             return true
         }
         return false
     }
 
+    /**
+     * On dismiss
+     *
+     * @param x x co-ordinate.
+     * @param y y co-ordinate.
+     */
+    private fun onDismiss(x: Float, y: Float) {
+        when (mDismissType) {
+            DismissType.OUTSIDE -> if (!isViewContains(mMessageView, x, y)) {
+                dismiss()
+            }
+            DismissType.ANYWHERE -> dismiss()
+            DismissType.TARGET_VIEW -> if (mShowcaseViewRect!!.contains(x, y)) {
+                mTargetView?.performClick()
+                dismiss()
+            }
+            DismissType.SELF_VIEW -> if (isViewContains(mMessageView, x, y)) {
+                dismiss()
+            }
+            DismissType.OUTSIDE_TARGET_AND_MESSAGE -> if (!(mShowcaseViewRect!!.contains(
+                    x,
+                    y
+                ) || isViewContains(
+                    mMessageView,
+                    x,
+                    y
+                ))
+            ) {
+                dismiss()
+            }
+        }
+    }
+
+    /**
+     * Checks if the view contains the x and y co-ordinates.
+     *
+     * @param view View that need to be checked.
+     * @param rx Point X co-ordinate.
+     * @param ry Point Y co-ordinate.
+     *
+     * @return True if the co-ordinates are present in the view. False, otherwise.
+     */
     private fun isViewContains(view: View, rx: Float, ry: Float): Boolean {
         val location = IntArray(2)
         view.getLocationOnScreen(location)
@@ -180,6 +187,11 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         return !(rx < x || rx > x + w || ry < y || ry > y + h)
     }
 
+    /**
+     * Sets the Point x and y co-ordinates for [GuideMessageView].
+     *
+     * @param p [Point] Containing the x and y co-ordinates.
+     */
     private fun setMessageLocation(p: Point) {
         mMessageView.x = p.x.toFloat()
         mMessageView.y = p.y.toFloat()
@@ -196,16 +208,13 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         mShowcaseViewRect?.let { rect ->
             xMessageView = rect.left.toInt()
         }
-
-        if (isLandscape()) {
-            xMessageView -= getNavigationBarSize()
-        }
         if (xMessageView < 0) {
             xMessageView = 0
         }
 
         //set message view bottom
-        var yMessageView = 0
+        val indicatorHeight = INDICATOR_HEIGHT * mDensity
+        var yMessageView: Int
         if (mShowcaseViewRect!!.top + indicatorHeight > height / 2f) {
             mIsTop = false
             yMessageView =
@@ -221,6 +230,9 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         return Point(xMessageView, yMessageView)
     }
 
+    /**
+     * Displays the showcase view.
+     */
     fun show() {
         this.layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -228,105 +240,127 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         )
         this.isClickable = false
         ((context as Activity).window.decorView as ViewGroup).addView(this)
-        val startAnimation = AlphaAnimation(0.0f, 1.0f)
-        startAnimation.duration = APPEARING_ANIMATION_DURATION.toLong()
-        startAnimation.fillAfter = true
-        startAnimation(startAnimation)
     }
 
+    /**
+     * Set content on text view.
+     *
+     * @param str String content.
+     */
     fun setContentText(str: String?) {
         mMessageView.setContentText(str)
     }
 
+    /**
+     * Set text size
+     *
+     * @param size Text size.
+     */
     fun setContentTextSize(size: Int) {
         mMessageView.setContentTextSize(size)
     }
 
+    /**
+     * Class to build the showcase view
+     */
     class Builder(private val context: Context) {
-        private var targetView: View? = null
-        private var contentText: String? = null
-        private var dismissType: DismissType? = null
-        private var guideListener: GuideListener? = null
-        private var contentTextSize = 0
+        private var mTargetView: View? = null
+        private var mContentText: String? = null
+        private var mDismissType: DismissType? = null
+        private var mGuideListener: GuideListener? = null
+        private var mContentTextSize = 0
         private var mViewType: ViewType? = null
 
+        /**
+         * View on which the showcase view has to be displayed.
+         *
+         * @param view Target view.
+         * @return [Builder]
+         */
         fun setTargetView(view: View?): Builder {
-            targetView = view
+            mTargetView = view
             return this
         }
 
         /**
-         * Set description for the target view.
+         * Set description on text view.
          *
          * @param contentText Description text.
          * @return [Builder]
          */
         fun setContentText(contentText: String?): Builder {
-            this.contentText = contentText
+            this.mContentText = contentText
             return this
         }
 
         /**
-         * adding a listener on show case view
+         * Set listener on show case view.
          *
-         * @param guideListener a listener for events
+         * @param guideListener Listener for events.
+         * @return [Builder]
          */
         fun setGuideListener(guideListener: GuideListener?): Builder {
-            this.guideListener = guideListener
+            this.mGuideListener = guideListener
             return this
         }
 
         /**
-         * the defined text size overrides any defined size in the default or provided style
+         * Set message view text size.
          *
-         * @param size title text by sp unit
-         * @return builder
+         * @param size Text size.
+         * @return [Builder]
          */
         fun setContentTextSize(size: Int): Builder {
-            contentTextSize = size
+            mContentTextSize = size
             return this
         }
 
         /**
-         * this method defining the type of dismissing function
+         * Set dismiss type on showcase view.
          *
-         * @param dismissType should be one type of DismissType enum. for example: outside -> Dismissing with click on outside of MessageView
+         * @param dismissType Type defined in [DismissType]
+         * @return [Builder]
          */
         fun setDismissType(dismissType: DismissType?): Builder {
-            this.dismissType = dismissType
+            this.mDismissType = dismissType
             return this
         }
 
         /**
-         * Sets the type of view
+         * Sets the type of view for text view and arrow alignment.
          *
          * @param viewType [ViewType]
+         * @return [Builder]
          */
         fun setViewType(viewType: ViewType): Builder {
             mViewType = viewType
             return this
         }
 
+        /**
+         * Builds the showcase view
+         *
+         * @return [GuideView]
+         */
         fun build(): GuideView {
-            val guideView = GuideView(context, targetView)
-            guideView.mDismissType = dismissType ?: DismissType.TARGET_VIEW
+            val guideView = GuideView(context, mTargetView)
+            guideView.mDismissType = mDismissType ?: DismissType.TARGET_VIEW
             guideView.mViewType = mViewType
-            if (contentText != null) {
-                guideView.setContentText(contentText)
+            if (mContentText != null) {
+                guideView.setContentText(mContentText)
             }
-            if (contentTextSize != 0) {
-                guideView.setContentTextSize(contentTextSize)
+            if (mContentTextSize != 0) {
+                guideView.setContentTextSize(mContentTextSize)
             }
-            if (guideListener != null) {
-                guideView.mGuideListener = guideListener
+            if (mGuideListener != null) {
+                guideView.mGuideListener = mGuideListener
             }
             return guideView
         }
     }
 
     companion object {
-        private const val INDICATOR_HEIGHT = 18 //Space between message view and arrow
-        private const val APPEARING_ANIMATION_DURATION = 400
+        private const val INDICATOR_HEIGHT = 18 //Space arrow and showcase view
         private const val RADIUS_SIZE_TARGET_RECT = 50f //Corner radius of rectangle
         private const val BACKGROUND_COLOR = -0x67000000
         private const val SHOW_CASE_VIEW_DEFAULT_MARGIN = 16F //Bottom view default margin
@@ -338,12 +372,12 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         setLayerType(View.LAYER_TYPE_HARDWARE, null)
         mTargetView = view
         mDensity = context.resources.displayMetrics.density
-        init()
         if (mTargetView != null) {
             mShowcaseViewRect = buildShowCaseRectangle()
         }
         mMessageView = GuideMessageView(getContext())
-        mMessageView.setColor(Color.WHITE)
+        mMessageView.setColor(ContextCompat.getColor(context, R.color.message_view_bg))
+        mMessageView.setContentTextColor(ContextCompat.getColor(context, R.color.message_view_text_color))
 
         addView(
             mMessageView,
