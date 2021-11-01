@@ -10,7 +10,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
-import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
 import com.sp.showcaseview.config.DismissType
@@ -61,9 +60,9 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
             getVectorBitmap(context, drawableId)?.let { bitmap ->
                 val xBitmap = mMessageView.x
                 val yBitmap = if (mIsTop) {
-                    mMessageView.y - bitmap.height
+                    mMessageView.y.minus(bitmap.height.minus(CHEVRON_TOP_GAP * mDensity))
                 } else {
-                    mMessageView.y + mMessageView.height
+                    mMessageView.y.plus(mMessageView.height.minus(CHEVRON_BOTTOM_GAP * mDensity))
                 }
                 canvas.drawBitmap(
                     bitmap,
@@ -365,6 +364,8 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         private const val BACKGROUND_COLOR = -0x67000000
         private const val SHOW_CASE_VIEW_DEFAULT_MARGIN = 16F //Bottom view default margin
         private const val DEFAULT_MESSAGE_VIEW_WIDTH = 250 //Message view width
+        private const val CHEVRON_TOP_GAP = 3
+        private const val CHEVRON_BOTTOM_GAP = 5
     }
 
     init {
@@ -377,7 +378,12 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         }
         mMessageView = GuideMessageView(getContext())
         mMessageView.setColor(ContextCompat.getColor(context, R.color.message_view_bg))
-        mMessageView.setContentTextColor(ContextCompat.getColor(context, R.color.message_view_text_color))
+        mMessageView.setContentTextColor(
+            ContextCompat.getColor(
+                context,
+                R.color.message_view_text_color
+            )
+        )
 
         addView(
             mMessageView,
