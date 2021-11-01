@@ -1,4 +1,4 @@
-package com.sp.showcaseview
+package com.sp.showcaseview.config
 
 import android.graphics.Path
 import android.graphics.RectF

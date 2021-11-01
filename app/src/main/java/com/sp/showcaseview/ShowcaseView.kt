@@ -13,6 +13,7 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
 import com.sp.showcaseview.config.DismissType
+import com.sp.showcaseview.config.Target
 import com.sp.showcaseview.config.ViewType
 import com.sp.showcaseview.listener.GuideListener
 
@@ -25,7 +26,7 @@ import com.sp.showcaseview.listener.GuideListener
  * @since 10/27/2021
  */
 @SuppressLint("ViewConstructor")
-class GuideView constructor(context: Context, view: View?) : FrameLayout(context) {
+class ShowcaseView constructor(context: Context, view: View?) : FrameLayout(context) {
 
     private val mBackGroundPaint: Paint = Paint()
     private val mArrowPaint: Paint = Paint()
@@ -39,7 +40,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
     private var mGuideListener: GuideListener? = null
     private var mDismissType: DismissType? = null
     private var mViewType: ViewType? = null
-    private val mMessageView: GuideMessageView
+    private val mMessageView: MessageView
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -187,7 +188,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
     }
 
     /**
-     * Sets the Point x and y co-ordinates for [GuideMessageView].
+     * Sets the Point x and y co-ordinates for [MessageView].
      *
      * @param p [Point] Containing the x and y co-ordinates.
      */
@@ -339,10 +340,10 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         /**
          * Builds the showcase view
          *
-         * @return [GuideView]
+         * @return [ShowcaseView]
          */
-        fun build(): GuideView {
-            val guideView = GuideView(context, mTargetView)
+        fun build(): ShowcaseView {
+            val guideView = ShowcaseView(context, mTargetView)
             guideView.mDismissType = mDismissType ?: DismissType.TARGET_VIEW
             guideView.mViewType = mViewType
             if (mContentText != null) {
@@ -377,7 +378,7 @@ class GuideView constructor(context: Context, view: View?) : FrameLayout(context
         if (mTargetView != null) {
             mShowcaseViewRect = buildShowCaseRectangle()
         }
-        mMessageView = GuideMessageView(getContext())
+        mMessageView = MessageView(getContext())
         mMessageView.setColor(ContextCompat.getColor(context, R.color.message_view_bg))
         mMessageView.setContentTextColor(
             ContextCompat.getColor(

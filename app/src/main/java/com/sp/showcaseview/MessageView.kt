@@ -16,7 +16,7 @@ import androidx.core.view.setPadding
  * @author Saikrishna Pawar
  * @since 10/27/2021
  */
-internal class GuideMessageView(context: Context) :
+internal class MessageView(context: Context) :
     LinearLayout(context) {
 
     private val mPaint: Paint

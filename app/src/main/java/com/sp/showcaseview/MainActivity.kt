@@ -12,8 +12,8 @@ import com.sp.showcaseview.listener.GuideListener
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mBinding: ActivityMainBinding
-    private var mGuideView: GuideView? = null
-    private var builder: GuideView.Builder? = null
+    private var mShowcaseView: ShowcaseView? = null
+    private var builder: ShowcaseView.Builder? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showIntro(text: String, currentView: View) {
-        builder = GuideView.Builder(this)
+        builder = ShowcaseView.Builder(this)
         builder?.let {
             it.setContentText(text)
             it.setContentTextSize(16)
@@ -54,12 +54,12 @@ class MainActivity : AppCompatActivity() {
                             return
                         }
                     }
-                    mGuideView = it.build()
-                    mGuideView?.show()
+                    mShowcaseView = it.build()
+                    mShowcaseView?.show()
                 }
             })
-            mGuideView = it.build()
-            mGuideView?.show()
+            mShowcaseView = it.build()
+            mShowcaseView?.show()
         }
     }
 }
