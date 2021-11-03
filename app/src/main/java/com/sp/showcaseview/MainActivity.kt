@@ -3,6 +3,7 @@ package com.sp.showcaseview
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.sp.showcaseview.config.DismissType
 import com.sp.showcaseview.config.ViewType
 import com.sp.showcaseview.databinding.ActivityMainBinding
@@ -20,20 +21,19 @@ class MainActivity : AppCompatActivity() {
         mBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(mBinding.root)
 
-        showIntro(
-            "Get quick access to the main activities of your business",
-            mBinding.bottomNav
-        )
+        showIntro(mBinding.bottomNav)
     }
 
-    private fun showIntro(text: String, currentView: View) {
+    private fun showIntro(currentView: View) {
         builder = ShowcaseView.Builder(this)
         builder?.let {
-            it.setContentText(text)
+            it.setContentText("Get quick access to the main activities of your business")
             it.setContentTextSize(16)
             it.setDismissType(DismissType.ANYWHERE)
             it.setTargetView(currentView)
             it.setViewType(ViewType.BOTTOM_NAVIGATION)
+            it.setContentBackgroundColor(ContextCompat.getColor(this, R.color.message_view_bg))
+            it.setContentTextColor(ContextCompat.getColor(this, R.color.message_view_text_color))
             it.setGuideListener(object : GuideListener {
                 override fun onDismiss(view: View) {
                     when (view.id) {

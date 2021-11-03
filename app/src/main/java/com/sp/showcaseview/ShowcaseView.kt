@@ -261,11 +261,31 @@ class ShowcaseView constructor(context: Context, view: View?) : FrameLayout(cont
     }
 
     /**
+     * Set content background color.
+     *
+     * @param color Color resource identifier.
+     */
+    fun setContentBackgroundColor(color: Int) {
+        mMessageView.setColor(color)
+    }
+
+    /**
+     * Set content text color.
+     *
+     * @param color Color resource identifier.
+     */
+    fun setContentTextColor(color: Int) {
+        mMessageView.setContentTextColor(color)
+    }
+
+    /**
      * Class to build the showcase view
      */
     class Builder(private val context: Context) {
         private var mTargetView: View? = null
         private var mContentText: String? = null
+        private var mContentBackgroundColor: Int = 0
+        private var mContentTextColor: Int = 0
         private var mDismissType: DismissType? = null
         private var mGuideListener: GuideListener? = null
         private var mContentTextSize = 0
@@ -338,24 +358,52 @@ class ShowcaseView constructor(context: Context, view: View?) : FrameLayout(cont
         }
 
         /**
+         * Set message view background color.
+         *
+         * @param bgColor Message view background color.
+         * @return [Builder]
+         */
+        fun setContentBackgroundColor(bgColor: Int): Builder {
+            mContentBackgroundColor = bgColor
+            return this
+        }
+
+        /**
+         * Set message view text color
+         *
+         * @param textColor Message view text color.
+         * @return [Builder]
+         */
+        fun setContentTextColor(textColor: Int): Builder {
+            mContentTextColor = textColor
+            return this
+        }
+
+        /**
          * Builds the showcase view
          *
          * @return [ShowcaseView]
          */
         fun build(): ShowcaseView {
-            val guideView = ShowcaseView(context, mTargetView)
-            guideView.mDismissType = mDismissType ?: DismissType.TARGET_VIEW
-            guideView.mViewType = mViewType
+            val showcaseView = ShowcaseView(context, mTargetView)
+            showcaseView.mDismissType = mDismissType ?: DismissType.TARGET_VIEW
+            showcaseView.mViewType = mViewType
             if (mContentText != null) {
-                guideView.setContentText(mContentText)
+                showcaseView.setContentText(mContentText)
             }
             if (mContentTextSize != 0) {
-                guideView.setContentTextSize(mContentTextSize)
+                showcaseView.setContentTextSize(mContentTextSize)
+            }
+            if(mContentBackgroundColor != 0) {
+                showcaseView.setContentBackgroundColor(mContentBackgroundColor)
+            }
+            if (mContentTextColor != 0) {
+                showcaseView.setContentTextColor(mContentTextColor)
             }
             if (mGuideListener != null) {
-                guideView.mGuideListener = mGuideListener
+                showcaseView.mGuideListener = mGuideListener
             }
-            return guideView
+            return showcaseView
         }
     }
 
@@ -379,14 +427,6 @@ class ShowcaseView constructor(context: Context, view: View?) : FrameLayout(cont
             mShowcaseViewRect = buildShowCaseRectangle()
         }
         mMessageView = MessageView(getContext())
-        mMessageView.setColor(ContextCompat.getColor(context, R.color.message_view_bg))
-        mMessageView.setContentTextColor(
-            ContextCompat.getColor(
-                context,
-                R.color.message_view_text_color
-            )
-        )
-
         addView(
             mMessageView,
             LayoutParams(
